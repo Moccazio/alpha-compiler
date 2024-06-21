@@ -5,7 +5,7 @@ from distutils.core import setup
 setup(name='Alpha Compiler',
       version='0.2',
       description='Python tools for quantitative finance',
-      author='Peter Harrington & Max Wimmer',
+      author='',
       author_email='',
       url='',
       packages=['alphacompiler',
