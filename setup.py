@@ -3,11 +3,11 @@
 from distutils.core import setup
 
 setup(name='Alpha Compiler',
-      version='0.1',
+      version='0.2',
       description='Python tools for quantitative finance',
-      author='Peter Harrington',
-      author_email='peter.b.harrington@gmail.com',
-      url='https://www.alphacompiler.com/',
+      author='Peter Harrington & Max Wimmer',
+      author_email='',
+      url='',
       packages=['alphacompiler',
           'alphacompiler.util', 
           'alphacompiler.data', 
