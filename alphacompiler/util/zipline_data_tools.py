@@ -3,7 +3,6 @@
 
 Created by Peter Harrington (pbharrin) on 10/10/17.
 """
-
 import os
 from zipline.data.bundles.core import load
 import numpy as np
@@ -11,6 +10,10 @@ from zipline.utils.math_utils import nanmean, nanstd
 from zipline.pipeline import SimplePipelineEngine
 from zipline.pipeline.loaders import USEquityPricingLoader
 from zipline.pipeline.data import USEquityPricing
+
+# trading calender
+from exchange_calendars import get_calendar
+trading_calendar = get_calendar('NYSE')
 
 
 def fast_cov(m0, m1):
@@ -67,7 +70,7 @@ def get_tickers_from_bundle(bundle_name):
     bundle_data = load(bundle_name, os.environ, None)
 
     # get a list of all sids
-    lifetimes = bundle_data.asset_finder._compute_asset_lifetimes(frozenset([str("US")]))
+    lifetimes = bundle_data.asset_finder._compute_asset_lifetimes(country_codes=['US'])
     all_sids = lifetimes.sid
 
     # retreive all assets in the bundle
@@ -82,7 +85,7 @@ def get_all_assets_for_bundle(bundle_name):
     bundle_data = load(bundle_name, os.environ, None)
 
     # get a list of all sids
-    lifetimes = bundle_data.asset_finder._compute_asset_lifetimes(frozenset([str("US")]))
+    lifetimes = bundle_data.asset_finder._compute_asset_lifetimes(country_codes=['US'])
     all_sids = lifetimes.sid
 
     print('all_sids: ', all_sids)
@@ -103,7 +106,7 @@ def make_pipeline_engine(bundle, data_dates):
 
     bundle_data = load(bundle, os.environ, None)
 
-    pipeline_loader = USEquityPricingLoader(bundle_data.equity_daily_bar_reader, bundle_data.adjustment_reader)
+    pipeline_loader = USEquityPricingLoader.without_fx(bundle_data.equity_daily_bar_reader, bundle_data.adjustment_reader)
 
     def choose_loader(column):
         if column in USEquityPricing.columns:
@@ -111,7 +114,8 @@ def make_pipeline_engine(bundle, data_dates):
         raise ValueError("No PipelineLoader registered for column %s." % column)
 
     # set up pipeline
-    cal = bundle_data.equity_daily_bar_reader.trading_calendar.all_sessions
+    #cal = bundle_data.equity_daily_bar_reader.trading_calendar.all_sessions
+    cal = get_calendar('NYSE')
     cal2 = cal[(cal >= data_dates[0]) & (cal <= data_dates[1])]
 
     spe = SimplePipelineEngine(get_loader=choose_loader,
