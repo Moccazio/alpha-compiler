@@ -144,7 +144,7 @@ def pack_sparse_data(N, rawpath, fields, filename):
         for field in fields:
             data[field][i, :ind_len] = df[field]
 
-    data.dump(filename)  # can be read back with np.load()
+    data.dump(filename, protocol=5)  # can be read back with np.load()
 
 
 def clear_raw_folder(raw_folder_path):
