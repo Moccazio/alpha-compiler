@@ -2,14 +2,25 @@
 Custom Bundle for Loading the SEP daily stock dataset from Sharadar, from a dump.
 
 Created by Peter Harrington (pbharrin) on 3/8/18.
+Updated by Maximilan Wimmer (moccazio) on 5/7/24 
 """
 
+import os
+from os import environ as env
+
+import pandas as pd
+import numpy as np
+from exchange_calendars import get_calendar
+from zipline.utils.cli import maybe_show_progress
+from contextlib import closing
+import traceback
 
 import pandas as pd
 # from zipline.utils.calendars import get_calendar # zipline Quantopian 
 from zipline.utils.calendar_utils import get_calendar # zipline-reloaded
 import sys
 
+#-------------------------------------------------------------------------
 # Exchange Metadata (for country code mapping)
 EXCHANGE_NAME = 'NYSE'
 exchange_d = {'exchange': [EXCHANGE_NAME], 'canonical_name': [EXCHANGE_NAME], 'country_code': ['US']}
@@ -17,6 +28,8 @@ exchange_d = {'exchange': [EXCHANGE_NAME], 'canonical_name': [EXCHANGE_NAME], 'c
 METADATA_HEADERS = ['start_date', 'end_date', 'auto_close_date',
                     'symbol', 'exchange', 'asset_name']
 
+#-------------------------------------------------------------------------
+# add functions 
 
 def check_for_abnormal_returns(df, thresh=3.0):
     """Checks to see if any days have abnormal returns"""
@@ -25,20 +38,19 @@ def check_for_abnormal_returns(df, thresh=3.0):
     if abnormal_rets.shape[0] > 0:
         sys.stderr.write('Abnormal returns for: {}\n'.format(df.iloc[0]['ticker']))
         sys.stderr.write('{}\n'.format(str(abnormal_rets)))
-
+      
 
 def from_sep_dump(file_name, start=None, end=None):
     """
-    ticker,date,open,high,low,close,volume,dividends,lastupdated
-    A,2008-01-02,36.67,36.8,36.12,36.3,1858900.0,0.0,2017-11-01
+    ticker,date,open,high,low,close,volume,closeadj,closeunadj,lastupdated
 
     To use this make your ~/.zipline/extension.py look similar this:
 
     from zipline.data.bundles import register
-    from alphacompiler.data.loaders.sep_quandl import from_sep_dump
+    from sep_sharadar import from_sep_dump
 
     register("sep",
-         from_sep_dump("/path/to/your/SEP/dump/SHARADAR_SEP_69.csv"),)
+         from_sep_dump("/path/to/your/SEP/dump/SHARADAR_SEP.csv"),)
 
     """
     # us_calendar = get_calendar("NYSE").all_sessions # zipline Quantopian 
@@ -65,8 +77,8 @@ def from_sep_dump(file_name, start=None, end=None):
                          parse_dates=['date'], na_values=['NA'])
 
         # drop unused columns, dividends will be used later
-        df = df.drop(['lastupdated', 'dividends', 'closeunadj'], axis=1)
-
+        #df = df.drop(['lastupdated', 'dividends', 'closeunadj'], axis=1) # dividends moved to SHARADAR/ACTIONS 
+        df = df.drop(['lastupdated', 'closeunadj', 'closeadj'], axis=1)
         # counter of valid securites, this will be our primary key
         sec_counter = 0
         data_list = []  # list to send to daily_bar_writer
@@ -122,20 +134,10 @@ def from_sep_dump(file_name, start=None, end=None):
         print("a total of {} securities were loaded into this bundle".format(
             sec_counter))
 
-        # read in Dividend History
-        dfd = pd.read_csv(file_name, index_col='date',
-                         parse_dates=['date'], na_values=['NA'])
-        # drop rows where dividends == 0.0
-        dfd = dfd[dfd["dividends"] != 0.0]
-        dfd = dfd.dropna()
-
-        dfd.loc[:, 'ex_date'] = dfd.loc[:, 'record_date'] = dfd.index
-        dfd.loc[:, 'declared_date'] = dfd.loc[:, 'pay_date'] = dfd.index
-        dfd.loc[:, 'sid'] = dfd.loc[:, 'ticker'].apply(lambda x: ticker2sid_map[x])
-        dfd = dfd.rename(columns={'dividends': 'amount'})
-        dfd = dfd.drop(['open', 'high', 'low', 'close', 'volume', 'lastupdated', 'ticker', 'closeunadj'], axis=1)
-
-        # # format dfd to have sid
-        adjustment_writer.write(dividends=dfd)
-
+        # write adjustments
+        # empty dataframe for splits
+                 
+        dfs = pd.DataFrame(columns=['sid', 'effective_date', 'ratio'], data=[[1, pd.to_datetime('2000-01-01'), 1.0]])
+        adjustment_writer.write(splits=dfs)
+        
     return ingest
