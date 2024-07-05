@@ -29,7 +29,7 @@ METADATA_HEADERS = ['start_date', 'end_date', 'auto_close_date',
                     'symbol', 'exchange', 'asset_name']
 
 #-------------------------------------------------------------------------
-# add functions 
+# Add functions 
 
 def check_for_abnormal_returns(df, thresh=3.0):
     """Checks to see if any days have abnormal returns"""
@@ -47,10 +47,10 @@ def from_sep_dump(file_name, start=None, end=None):
     To use this make your ~/.zipline/extension.py look similar this:
 
     from zipline.data.bundles import register
-    from sep_sharadar import from_sep_dump
+    from alphacompiler.data.loaders import sep_quandl 
 
     register("sep",
-         from_sep_dump("/path/to/your/SEP/dump/SHARADAR_SEP.csv"),)
+         sep_quandl.from_sep_dump("/path/to/your/SEP/dump/SHARADAR_SEP.csv"),)
 
     """
     # us_calendar = get_calendar("NYSE").all_sessions # zipline Quantopian 
