@@ -137,7 +137,7 @@ def from_sep_dump(file_name, start=None, end=None):
         # write adjustments
         # empty dataframe for splits
                  
-        dfs = pd.DataFrame(columns=['sid', 'effective_date', 'ratio'], data=[[1, pd.to_datetime('2000-01-01'), 1.0]])
+        dfs = pd.DataFrame(columns=['sid', 'effective_date', 'ratio'], data=[[1, pd.to_datetime('2005-01-01'), 1.0]])
         adjustment_writer.write(splits=dfs)
         
     return ingest
